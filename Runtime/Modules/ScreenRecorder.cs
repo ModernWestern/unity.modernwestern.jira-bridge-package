@@ -22,7 +22,7 @@ namespace QA.Runtime
 
             _videoCaptureController = qaObject.AddComponent<VideoCaptureCtrl>();
 
-#if QA_DEBUG
+#if JIRA_DEBUGGING
             _videoCaptureController.debug = true;
 #else
             _videoCaptureController.debug = false;

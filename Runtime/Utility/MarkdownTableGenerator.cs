@@ -14,7 +14,7 @@ namespace Jira.Runtime.Utility
         {
             if (descriptions.Length != imageUrls.Length)
             {
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                 Debug.Log("Arrays must have the same length.");
 #endif
                 return string.Empty;

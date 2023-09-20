@@ -39,7 +39,7 @@ namespace Jira.Runtime
                 _attachmentUrl = $"{_issueUrl}/{{0}}/attachments";
 
                 _auth = $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientData.user}:{ClientData.token}"))}";
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                 Debug.Log($"AUTH -> {_auth}");
 #endif
             }
@@ -88,14 +88,14 @@ namespace Jira.Runtime
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                 Debug.Log($"POST SUCCESSFUL -> {request.downloadHandler.text}");
 #endif
                 complete?.Invoke(request.downloadHandler);
 
                 yield break;
             }
-#if QA_DEBUG
+#if JIRA_DEBUGGING
             Debug.Log($"POST FAILED -> {request.error}");
 #endif
             complete?.Invoke(request.downloadHandler);
@@ -114,7 +114,7 @@ namespace Jira.Runtime
 
             var issueResponseData = JiraIssueConverter.GetData(issueResponse);
 
-#if QA_DEBUG
+#if JIRA_DEBUGGING
             Debug.Log($"SCREENSHOT PATH -> {path}\nBytes Length [{screenshotData.Length}]");
 
             Debug.Log(issueResponseData);
@@ -145,14 +145,14 @@ namespace Jira.Runtime
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                 Debug.Log($"SCREENSHOT ATTACHED SUCCESSFULLY -> {request.downloadHandler.text}");
 #endif
                 complete?.Invoke();
 
                 yield break;
             }
-#if QA_DEBUG
+#if JIRA_DEBUGGING
             Debug.Log($"ERROR ATTACHING SCREENSHOT -> {request.error}");
 #endif
             complete?.Invoke();

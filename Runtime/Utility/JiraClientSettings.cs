@@ -20,7 +20,7 @@ namespace Jira.Runtime
         {
             if (!File.Exists(FilePath))
             {
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                 Debug.Log("The file JiraSettings.js does not exist, is corrupted or is empty. Re-enable the QA Tool");
 #endif
                 return null;
@@ -28,7 +28,7 @@ namespace Jira.Runtime
 
             var data = JsonUtility.FromJson<JiraClient>(File.ReadAllText(FilePath));
 
-#if QA_DEBUG
+#if JIRA_DEBUGGING
             Debug.Log($"FILE GET -> {data}");
 #endif
             return data;
@@ -50,7 +50,7 @@ namespace Jira.Runtime
                 projectkey = projectKey
             };
 
-#if QA_DEBUG
+#if JIRA_DEBUGGING
             Debug.Log($"FILE SET -> {client}");
 #endif
             if (!File.Exists(FilePath))

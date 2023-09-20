@@ -120,7 +120,7 @@ namespace Jira.Editor.ProjectConfig
                     catch (Exception e)
                     {
                         _defineRockVR = false;
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                         Debug.LogError(e);
 #else
                         _ = e;

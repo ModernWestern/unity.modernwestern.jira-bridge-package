@@ -48,7 +48,7 @@ namespace Jira.Runtime
             }
             catch (Exception e)
             {
-#if QA_DEBUG
+#if JIRA_DEBUGGING
                 Debug.LogError($"Error saving file: {e.Message}");
 #else
                 _ = e;

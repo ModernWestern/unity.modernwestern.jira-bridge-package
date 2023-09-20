@@ -2,25 +2,25 @@
 {
     public static class Constants
     {
-        public const string ModuleDefinition = "QA_BUILD_ENABLE";
+        public const string ModuleDefinition = "JIRA";
 
-        public const string ModuleDebugging = "QA_DEBUG";
+        public const string ModuleDebugging = "JIRA_DEBUGGING";
 
         public const string RockVR = "ROCK_VR";
 
-        public const string Project = "QA_JIRA_PROJECT";
+        public const string Project = "JIRA_PROJECT";
 
-        public const string Jira = "QA_JIRA_SETTINGS";
+        public const string Jira = "JIRA_SETTINGS";
 
-        public const string Domain = "QA_DOMAIN";
+        public const string Domain = "JIRA_DOMAIN";
 
-        public const string Token = "QA_TOKEN";
+        public const string Token = "JIRA_API_TOKEN";
 
-        public const string User = "QA_USER";
+        public const string User = "JIRA_USER";
 
-        public const string Key = "QA_KEY";
+        public const string Key = "JIRA_ISSUE_KEY";
 
-        public const string IssueType = "QA_ISSUE";
+        public const string IssueType = "JIRA_ISSUE_TYPE";
 
         public const string Https = "https://";
     }
