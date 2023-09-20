@@ -36,7 +36,7 @@ namespace Jira.Editor.ProjectConfig
                 {
                     new GameObject { name = "~JiraBridgeObject" }.AddComponent<OnGUIWindow>();
 
-                    JiraClientSettings.Set(_auth.domain, _auth.user, _auth.token, _project.issueType, _project.key);
+                    JiraClientSettings.Set(_auth.domain, _auth.user, _auth.token.Replace(" ", string.Empty), _project.issueType, _project.key);
                 }
             }
             else
