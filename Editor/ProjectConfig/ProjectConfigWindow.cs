@@ -111,6 +111,9 @@ namespace Jira.Editor.ProjectConfig
 
                 if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject(new[] { "Jira Bridge", "RockVR" }, out var paths))
                 {
+#if JIRA_DEBUGGING
+                    Debug.Log($"SOURCE -> {paths[0]} - DESTINATION -> {paths[1]}");
+#endif
                     try
                     {
                         System.IO.File.Copy(Path.Combine(paths[0], "Runtime", "Samples", $"AssemblyReferences.{File.Extension.asmref.Get()}"), paths[1], true);
