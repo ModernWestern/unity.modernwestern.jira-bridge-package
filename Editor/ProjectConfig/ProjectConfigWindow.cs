@@ -109,11 +109,11 @@ namespace Jira.Editor.ProjectConfig
             {
                 _defineRockVR = !_defineRockVR;
 
-                if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject(new[] { "QA", "RockVR" }, out var paths))
+                if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject(new[] { "Jira Bridge", "RockVR" }, out var paths))
                 {
                     try
                     {
-                        System.IO.File.Copy(Path.Combine(paths[0], "Core", "Samples", $"AssemblyReferences.{File.Extension.asmref.Get()}"), paths[1], true);
+                        System.IO.File.Copy(Path.Combine(paths[0], "Runtime", "Samples", $"AssemblyReferences.{File.Extension.asmref.Get()}"), paths[1], true);
 
                         ScriptingDefineUtility.Set(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, _defineRockVR);
                     }
