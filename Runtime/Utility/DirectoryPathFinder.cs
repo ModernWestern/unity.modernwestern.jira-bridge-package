@@ -10,7 +10,7 @@ namespace Jira.Runtime.Utility
         public static bool FindDirectoryPathInProject(string[] directories, out string[] paths)
         {
             var list = (from directory in directories
-                select Directory.GetDirectories(Application.dataPath, directory, SearchOption.AllDirectories)
+                select Directory.GetDirectories(Path.Combine(Application.dataPath, ".."), directory, SearchOption.AllDirectories)
                 into results
                 where results.Length > 0
                 select directories[0]).ToList();
