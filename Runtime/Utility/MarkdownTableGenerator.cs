@@ -1,4 +1,5 @@
 using System.Text;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Jira.Runtime.Utility
@@ -15,6 +16,7 @@ namespace Jira.Runtime.Utility
             if (descriptions.Length != imageUrls.Length)
             {
 #if JIRA_DEBUGGING
+
                 Debug.Log("Arrays must have the same length.");
 #endif
                 return string.Empty;
