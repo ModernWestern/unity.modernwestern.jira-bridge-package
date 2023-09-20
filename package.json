@@ -1,0 +1,14 @@
+{
+  "name": "com.modernwestern.jira-bridge",
+  "displayName": "Jira Bridge",
+  "version": "1.0.0",
+  "description": "Utils",
+  "keywords": [
+    "Utils",
+    "Exetnsion",
+    "Methods",
+    "Tools"
+  ],
+  "category": "Tool",
+  "type": "tool"
+}
