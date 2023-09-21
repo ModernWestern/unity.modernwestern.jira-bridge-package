@@ -43,7 +43,7 @@ namespace Jira.Runtime
 
             _documents = new DirectoryInfo(Path.Combine(Application.dataPath, "..", "Jira Issues Log", Application.productName));
 #else
-            _documents = new DirectoryInfo(Path.Combine(Application.streamingAssetsPath, "..", "Jira Issues Log", Application.productName));
+            _documents = new DirectoryInfo(Path.Combine(Application.streamingAssetsPath, "Jira Issues Log", Application.productName));
 #endif
             _attachments = new DirectoryInfo(Path.Combine(_documents.FullName, "Attachments"));
 #if ROCK_VR

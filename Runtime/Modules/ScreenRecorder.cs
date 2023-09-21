@@ -1,10 +1,9 @@
 using UnityEngine;
 
 #if ROCK_VR
-
 using RockVR.Video;
 
-namespace QA.Runtime
+namespace Jira.Runtime
 {
     public class ScreenRecorder
     {
