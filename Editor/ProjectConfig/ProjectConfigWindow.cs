@@ -103,49 +103,58 @@ namespace Jira.Editor.ProjectConfig
                 _defineDebugging = !_defineDebugging;
             }
 
+            ScriptingDefineUtility.Set(Constants.ModuleDefinition, EditorUserBuildSettings.selectedBuildTargetGroup, _definedSymbol);
+
+            ScriptingDefineUtility.Set(Constants.ModuleDebugging, EditorUserBuildSettings.selectedBuildTargetGroup, _defineDebugging);
+
+            RockVR();
+        }
+
+        private static void RockVR()
+        {
             GUILayout.Space(10);
 
             if (Button(_defineRockVR ? "Undefined RockVR" : "Define RockVR", ButtonStyle(_defineRockVR ? Color.yellow : Color.white)))
             {
-                _defineRockVR = !_defineRockVR;
-
-                if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject("unity.modernwestern.jira-bridge-package", out var jiraFolder))
+                if (!_defineRockVR)
                 {
-                    if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject("RockVR", out var rockFolder))
+                    if (DirectoryPathFinder.FindDirectoryPathInProjectByPattern("jira-bridge", out var jiraFolder) && DirectoryPathFinder.FindDirectoryPathInProject("RockVR", out var rockFolder))
                     {
-#if JIRA_DEBUGGING
+#if UNITY_EDITOR
                         Debug.Log($"SOURCE -> {jiraFolder}, DESTINATION -> {rockFolder}");
 #endif
                         try
                         {
+                            _defineRockVR = true;
+
                             var assemblyRef = $"AssemblyReferences{File.Extension.asmref.Get()}";
 
                             System.IO.File.Copy(Path.Combine(jiraFolder, "Samples~", assemblyRef), Path.Combine(rockFolder, assemblyRef), true);
 
-                            ScriptingDefineUtility.Set(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, _defineRockVR);
+                            ScriptingDefineUtility.Add(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, true);
                         }
                         catch (Exception e)
                         {
-                            _defineRockVR = false;
-#if JIRA_DEBUGGING
+                            ScriptingDefineUtility.Remove(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, false);
+#if UNITY_EDITOR
                             Debug.LogError(e);
 #else
                         _ = e;
 #endif
                         }
                     }
-#if JIRA_DEBUGGING
                     else
                     {
-                        Debug.Log("RockVR Asset does not exist");
-                    }
+#if UNITY_EDITOR
+                        Debug.Log("Package not found");
 #endif
+                    }
+                }
+                else
+                {
+                    _defineRockVR = false;
                 }
             }
-
-            ScriptingDefineUtility.Set(Constants.ModuleDefinition, EditorUserBuildSettings.selectedBuildTargetGroup, _definedSymbol);
-
-            ScriptingDefineUtility.Set(Constants.ModuleDebugging, EditorUserBuildSettings.selectedBuildTargetGroup, _defineDebugging);
         }
 
         private static void GetEditorPrefs()

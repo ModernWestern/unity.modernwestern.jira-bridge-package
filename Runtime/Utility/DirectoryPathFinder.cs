@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Jira.Runtime.Utility
@@ -13,6 +14,22 @@ namespace Jira.Runtime.Utility
             if (directories.Length > 0)
             {
                 path = directories[0];
+
+                return true;
+            }
+
+            path = string.Empty;
+
+            return false;
+        }
+
+        public static bool FindDirectoryPathInProjectByPattern(string directory, out string path)
+        {
+            var dir = Directory.GetDirectories(Path.GetDirectoryName(Application.dataPath) ?? Application.dataPath, "*", SearchOption.AllDirectories).FirstOrDefault(dir => dir.Contains(directory));
+
+            if (!string.IsNullOrEmpty(dir))
+            {
+                path = dir;
 
                 return true;
             }
