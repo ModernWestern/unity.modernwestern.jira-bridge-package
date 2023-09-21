@@ -109,26 +109,37 @@ namespace Jira.Editor.ProjectConfig
             {
                 _defineRockVR = !_defineRockVR;
 
-                if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject(new[] { "Jira Bridge", "RockVR" }, out var paths))
+                if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject("unity.modernwestern.jira-bridge-package", out var jiraFolder))
                 {
+                    if (_defineRockVR && DirectoryPathFinder.FindDirectoryPathInProject("RockVR", out var rockFolder))
+                    {
 #if JIRA_DEBUGGING
-                    Debug.Log($"SOURCE -> {paths[0]} - DESTINATION -> {paths[1]}");
+                        Debug.Log($"SOURCE -> {jiraFolder}, DESTINATION -> {rockFolder}");
 #endif
-                    try
-                    {
-                        System.IO.File.Copy(Path.Combine(paths[0], "Runtime", "Samples", $"AssemblyReferences.{File.Extension.asmref.Get()}"), paths[1], true);
+                        try
+                        {
+                            var assemblyRef = $"AssemblyReferences{File.Extension.asmref.Get()}";
 
-                        ScriptingDefineUtility.Set(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, _defineRockVR);
-                    }
-                    catch (Exception e)
-                    {
-                        _defineRockVR = false;
+                            System.IO.File.Copy(Path.Combine(jiraFolder, "Samples~", assemblyRef), Path.Combine(rockFolder, assemblyRef), true);
+
+                            ScriptingDefineUtility.Set(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, _defineRockVR);
+                        }
+                        catch (Exception e)
+                        {
+                            _defineRockVR = false;
 #if JIRA_DEBUGGING
-                        Debug.LogError(e);
+                            Debug.LogError(e);
 #else
                         _ = e;
 #endif
+                        }
                     }
+#if JIRA_DEBUGGING
+                    else
+                    {
+                        Debug.Log("RockVR Asset does not exist");
+                    }
+#endif
                 }
             }
 

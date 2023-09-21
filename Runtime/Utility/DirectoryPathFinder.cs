@@ -1,35 +1,14 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using UnityEngine;
 
 namespace Jira.Runtime.Utility
 {
     public static class DirectoryPathFinder
     {
-        public static bool FindDirectoryPathInProject(string[] directories, out string[] paths)
-        {
-            var list = (from directory in directories
-                select Directory.GetDirectories(Path.Combine(Application.dataPath, ".."), directory, SearchOption.AllDirectories)
-                into results
-                where results.Length > 0
-                select directories[0]).ToList();
-
-            if (list.Count > 0)
-            {
-                paths = list.ToArray();
-
-                return true;
-            }
-
-            paths = null;
-
-            return false;
-        }
-
         public static bool FindDirectoryPathInProject(string directory, out string path)
         {
-            var directories = Directory.GetDirectories(Application.dataPath, directory, SearchOption.AllDirectories);
+            var directories = Directory.GetDirectories(Path.GetDirectoryName(Application.dataPath) ?? Application.dataPath, directory, SearchOption.AllDirectories);
 
             if (directories.Length > 0)
             {
