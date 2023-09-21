@@ -127,9 +127,13 @@ namespace Jira.Editor.ProjectConfig
                         {
                             _defineRockVR = true;
 
-                            var assemblyRef = $"AssemblyReferences{File.Extension.asmref.Get()}";
+                            const string assemblyRef = "AssemblyReference";
 
-                            System.IO.File.Copy(Path.Combine(jiraFolder, "Samples~", assemblyRef), Path.Combine(rockFolder, assemblyRef), true);
+                            var source = Path.Combine(jiraFolder, "Samples~", assemblyRef);
+
+                            var destination = Path.Combine(rockFolder, assemblyRef);
+
+                            System.IO.File.Copy(source, Path.ChangeExtension(destination, File.Extension.asmref.Get()), true);
 
                             ScriptingDefineUtility.Add(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, true);
                         }
