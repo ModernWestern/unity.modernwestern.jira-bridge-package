@@ -1,5 +1,3 @@
-using System;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,16 +5,14 @@ namespace Jira.Editor.ProjectConfig
 {
     using Utility;
     using Runtime;
-    using Jira.Runtime.Utility;
-    using File = Jira.Runtime.Utility.File;
 
     public class ProjectConfigWindow : EditorWindow
     {
-        private static bool _definedSymbol, _defineDebugging, _defineRockVR, _jiraSettings, _projectSettings;
+        private static bool _definedJira, _defineJiraDebugging, _defineRockVR, _jiraSettingsFoldout, _jiraProjectSettingsFoldout;
 
-        private static (string domain, string token, string user) _auth;
+        private static (string domain, string token, string user) _jiraAuth;
 
-        private static (string issueType, string key) _project;
+        private static (string issueType, string key) _jiraProject;
 
         [MenuItem("Jira/Configs")]
         private static void ShowWindow()
@@ -30,13 +26,13 @@ namespace Jira.Editor.ProjectConfig
         {
             GetEditorPrefs();
 
-            if (_definedSymbol)
+            if (_definedJira)
             {
                 if (!Find(out _))
                 {
                     new GameObject { name = "~JiraBridgeObject" }.AddComponent<OnGUIWindow>();
 
-                    JiraClientSettings.Set(_auth.domain, _auth.user, _auth.token.Replace(" ", string.Empty), _project.issueType, _project.key);
+                    JiraClientSettings.Set(_jiraAuth.domain, _jiraAuth.user, _jiraAuth.token.Replace(" ", string.Empty), _jiraProject.issueType, _jiraProject.key);
                 }
             }
             else
@@ -52,17 +48,17 @@ namespace Jira.Editor.ProjectConfig
         {
             SetEditorPrefs();
 
-            _jiraSettings = Foldout(_jiraSettings, "Jira");
+            _jiraSettingsFoldout = Foldout(_jiraSettingsFoldout, "Jira");
 
-            if (_jiraSettings)
+            if (_jiraSettingsFoldout)
             {
                 Label("Domain", EditorStyles.largeLabel);
 
-                _auth.domain = TextField("", Validate(_auth.domain) ? _auth.domain.Contains(Constants.Https) ? _auth.domain : $"{Constants.Https}{_auth.domain}" : "");
+                _jiraAuth.domain = TextField("", Validate(_jiraAuth.domain) ? _jiraAuth.domain.Contains(Constants.Https) ? _jiraAuth.domain : $"{Constants.Https}{_jiraAuth.domain}" : "");
 
                 Label("User", EditorStyles.largeLabel);
 
-                _auth.user = TextField("", _auth.user);
+                _jiraAuth.user = TextField("", _jiraAuth.user);
 
                 Label("API Token", EditorStyles.largeLabel);
 
@@ -71,147 +67,107 @@ namespace Jira.Editor.ProjectConfig
                     wordWrap = true
                 };
 
-                _auth.token = TextArea(_auth.token, textFieldStyle, GUILayout.Height(100));
+                _jiraAuth.token = TextArea(_jiraAuth.token, textFieldStyle, GUILayout.Height(100));
             }
 
-            _projectSettings = Foldout(_projectSettings, "Project");
+            _jiraProjectSettingsFoldout = Foldout(_jiraProjectSettingsFoldout, "Project");
 
-            if (_projectSettings)
+            if (_jiraProjectSettingsFoldout)
             {
                 Label("Key", EditorStyles.largeLabel);
 
-                _project.key = TextField("", _project.key.ToUpper());
+                _jiraProject.key = TextField("", _jiraProject.key.ToUpper());
 
                 Label("Issue Type", EditorStyles.largeLabel);
 
-                _project.issueType = TextField("", _project.issueType);
+                _jiraProject.issueType = TextField("", _jiraProject.issueType);
             }
 
             GUILayout.Space(10);
 
-            if (Button(_definedSymbol ? "Disable Tool" : "Enable Tool", ButtonStyle(_definedSymbol ? Color.red : Color.white)))
+            if (Button(_definedJira ? "Disable Tool" : "Enable Tool", ButtonStyle(_definedJira, Color.red)))
             {
-                _definedSymbol = !_definedSymbol;
+                _definedJira = !_definedJira;
 
-                _defineDebugging = _definedSymbol;
+                _defineJiraDebugging = _definedJira;
             }
 
             GUILayout.Space(10);
 
-            if (_definedSymbol && Button(_defineDebugging ? "Disable Debugging" : "Enable Debugging", ButtonStyle(_defineDebugging ? Color.red : Color.white)))
+            if (_definedJira && Button(_defineJiraDebugging ? "Disable Debugging" : "Enable Debugging", ButtonStyle(_defineJiraDebugging, Color.red)))
             {
-                _defineDebugging = !_defineDebugging;
+                _defineJiraDebugging = !_defineJiraDebugging;
             }
 
-            ScriptingDefineUtility.Set(Constants.ModuleDefinition, EditorUserBuildSettings.selectedBuildTargetGroup, _definedSymbol);
+            // GUILayout.Space(10);
+            //
+            // RockVR();
 
-            ScriptingDefineUtility.Set(Constants.ModuleDebugging, EditorUserBuildSettings.selectedBuildTargetGroup, _defineDebugging);
+            ScriptingDefineUtility.Set(Constants.Jira, EditorUserBuildSettings.selectedBuildTargetGroup, _definedJira);
 
-            RockVR();
+            ScriptingDefineUtility.Set(Constants.JiraDebugging, EditorUserBuildSettings.selectedBuildTargetGroup, _defineJiraDebugging);
         }
 
         private static void RockVR()
         {
-            GUILayout.Space(10);
-
-            if (Button(_defineRockVR ? "Undefined RockVR" : "Define RockVR", ButtonStyle(_defineRockVR ? Color.yellow : Color.white)))
+            if (Button(_defineRockVR ? "Undefined RockVR" : "Define RockVR", ButtonStyle(_defineRockVR, Color.yellow)))
             {
-                if (!_defineRockVR)
+                _defineRockVR = !_defineRockVR;
+
+                if (_defineRockVR)
                 {
-                    if (DirectoryPathFinder.FindDirectoryPathInProjectByPattern("jira-bridge", out var jiraFolder) && DirectoryPathFinder.FindDirectoryPathInProject("RockVR", out var rockFolder))
+                    RockVRUtility.CreateAssemblyReference(done =>
                     {
-#if UNITY_EDITOR
-                        Debug.Log($"SOURCE -> {jiraFolder}, DESTINATION -> {rockFolder}");
-#endif
-                        try
+                        if (done)
                         {
-                            _defineRockVR = true;
-
-                            const string assemblyRef = "AssemblyReference";
-
-                            var source = Path.Combine(jiraFolder, "Samples~", assemblyRef);
-
-                            var destination = Path.Combine(rockFolder, assemblyRef);
-
-                            System.IO.File.Copy(source, Path.ChangeExtension(destination, File.Extension.asmref.Get()), true);
-
-                            ScriptingDefineUtility.Add(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, true);
+                            ScriptingDefineUtility.Add(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup);
                         }
-                        catch (Exception e)
+                        else
                         {
-                            ScriptingDefineUtility.Remove(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup, false);
-#if UNITY_EDITOR
-                            Debug.LogError(e);
-#else
-                        _ = e;
-#endif
+                            _defineRockVR = false;
                         }
-                    }
-                    else
-                    {
-#if UNITY_EDITOR
-                        Debug.Log("Package not found");
-#endif
-                    }
+                    });
                 }
                 else
                 {
-                    _defineRockVR = false;
+                    ScriptingDefineUtility.Remove(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup);
                 }
             }
         }
 
         private static void GetEditorPrefs()
         {
-            _defineDebugging = EditorPrefs.GetBool(Constants.ModuleDebugging);
-
-            _definedSymbol = EditorPrefs.GetBool(Constants.ModuleDefinition);
-
-            _projectSettings = EditorPrefs.GetBool(Constants.Project);
-
-            _jiraSettings = EditorPrefs.GetBool(Constants.Jira);
-
-            _auth.domain = EditorPrefs.GetString(Constants.Domain);
-
-            _auth.token = EditorPrefs.GetString(Constants.Token);
-
-            _auth.user = EditorPrefs.GetString(Constants.User);
-
-            _project.issueType = EditorPrefs.GetString(Constants.IssueType);
-
-            _project.key = EditorPrefs.GetString(Constants.Key);
-
-            _defineRockVR = EditorPrefs.GetBool(Constants.RockVR);
+            Prefs.jiraAuthDomain = _jiraAuth.domain;
+            Prefs.jiraSettingsFoldout = _jiraSettingsFoldout;
+            Prefs.jiraProjectKey = _jiraProject.key;
+            Prefs.jiraProjectSettingsFoldout = _jiraProjectSettingsFoldout;
+            Prefs.jiraAuthToken = _jiraAuth.token;
+            Prefs.jiraAuthUser = _jiraAuth.user;
+            Prefs.jiraProjectIssueType = _jiraProject.issueType;
+            Prefs.jiraDebugging = _defineJiraDebugging;
+            Prefs.defineJira = _definedJira;
+            Prefs.defineRockVR = _defineRockVR;
         }
 
         private static void SetEditorPrefs()
         {
-            EditorPrefs.SetBool(Constants.ModuleDebugging, _defineDebugging);
-
-            EditorPrefs.SetBool(Constants.ModuleDefinition, _definedSymbol);
-
-            EditorPrefs.SetBool(Constants.Project, _projectSettings);
-
-            EditorPrefs.SetBool(Constants.Jira, _jiraSettings);
-
-            EditorPrefs.SetString(Constants.Domain, _auth.domain);
-
-            EditorPrefs.SetString(Constants.Token, _auth.token);
-
-            EditorPrefs.SetString(Constants.User, _auth.user);
-
-            EditorPrefs.SetString(Constants.Key, _project.key);
-
-            EditorPrefs.SetString(Constants.IssueType, _project.issueType);
-
-            EditorPrefs.SetBool(Constants.RockVR, _defineRockVR);
+            _jiraAuth.domain = Prefs.jiraAuthDomain;
+            _jiraSettingsFoldout = Prefs.jiraSettingsFoldout;
+            _jiraProject.key = Prefs.jiraProjectKey;
+            _jiraProjectSettingsFoldout = Prefs.jiraProjectSettingsFoldout;
+            _jiraAuth.token = Prefs.jiraAuthToken;
+            _jiraAuth.user = Prefs.jiraAuthUser;
+            _jiraProject.issueType = Prefs.jiraProjectIssueType;
+            _defineJiraDebugging = Prefs.jiraDebugging;
+            _definedJira = Prefs.defineJira;
+            _defineRockVR = Prefs.defineRockVR;
         }
 
-        private static GUIStyle ButtonStyle(Color color)
+        private static GUIStyle ButtonStyle(bool status, Color color)
         {
             var style = new GUIStyle(EditorStyles.toolbarButton)
             {
-                normal = { textColor = !_definedSymbol ? Color.white : color },
+                normal = { textColor = !status ? Color.white : color },
                 fixedHeight = 50,
                 fontSize = 20
             };

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace Jira.Runtime.Utility
+namespace Jira.Editor.Utility
 {
     public static class DirectoryPathFinder
     {
