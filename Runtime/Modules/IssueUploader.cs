@@ -2,12 +2,11 @@ using System;
 using System.Text;
 using UnityEngine;
 using System.Collections;
+using System.IO;
 using UnityEngine.Networking;
 
 namespace Jira.Runtime
 {
-    using Jira;
-
     public class IssueUploader
     {
         private readonly string _issueUrl, _attachmentUrl, _auth;
@@ -101,61 +100,94 @@ namespace Jira.Runtime
             complete?.Invoke(request.downloadHandler);
         }
 
+//         private IEnumerator Attachment(string issueResponse, string path, Action complete)
+//         {
+//             if (!File.Exists(path))
+//             {
+//                 complete?.Invoke();
+//
+//                 yield break;
+//             }
+//
+//             // var screenshotData = System.IO.File.ReadAllBytes(path);
+//
+//             var screenshotData = new FileStream(path, FileMode.Open, FileAccess.Read);
+//
+//             var issueResponseData = JiraIssueConverter.GetData(issueResponse);
+//
+// #if JIRA_DEBUGGING
+//             Debug.Log($"SCREENSHOT PATH -> {path}\nBytes Length [{screenshotData.Length}]");
+//
+//             Debug.Log(issueResponseData);
+// #endif
+//             var request = new UnityWebRequest(string.Format(_attachmentUrl, issueResponseData.key));
+//
+//             request.method = UnityWebRequest.kHttpVerbPOST;
+//
+//             request.SetRequestHeader("Authorization", _auth);
+//
+//             request.SetRequestHeader("X-Atlassian-Token", "no-check");
+//
+//             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(screenshotData.ToString()));
+//
+//             request.downloadHandler = new DownloadHandlerBuffer();
+//
+//             yield return request.SendWebRequest();
+//
+//             if (request.result == UnityWebRequest.Result.Success)
+//             {
+// #if JIRA_DEBUGGING
+//                 Debug.Log($"SCREENSHOT ATTACHED SUCCESSFULLY -> {request.downloadHandler.text}");
+// #endif
+//                 complete?.Invoke();
+//
+//                 yield break;
+//             }
+// #if JIRA_DEBUGGING
+//             Debug.Log($"ERROR ATTACHING SCREENSHOT -> {request.error}");
+// #endif
+//             complete?.Invoke();
+//         }
+//     }
+
         private IEnumerator Attachment(string issueResponse, string path, Action complete)
         {
-            if (!System.IO.File.Exists(path))
+            if (!File.Exists(path))
             {
                 complete?.Invoke();
 
                 yield break;
             }
 
-            var screenshotData = System.IO.File.ReadAllBytes(path);
+            WWWForm form = new WWWForm();
+            FileStream fileStream = new FileStream(path, FileMode.Open);
+            byte[] fileBytes = new byte[fileStream.Length];
+            var read = fileStream.Read(fileBytes, 0, fileBytes.Length);
+            fileStream.Close();
+
+            form.AddBinaryData("file", fileBytes, Path.GetFileName(path));
 
             var issueResponseData = JiraIssueConverter.GetData(issueResponse);
 
-#if JIRA_DEBUGGING
-            Debug.Log($"SCREENSHOT PATH -> {path}\nBytes Length [{screenshotData.Length}]");
-
-            Debug.Log(issueResponseData);
-#endif
-            var request = new UnityWebRequest(string.Format(_attachmentUrl, issueResponseData.key));
-
-            request.method = UnityWebRequest.kHttpVerbPOST;
-
-            request.SetRequestHeader("Authorization", _auth);
-
-            request.SetRequestHeader("Content-Type", "image/png");
-
-            request.SetRequestHeader("Content-Type", " application/octet-stream");
-
-            request.SetRequestHeader("Content-Disposition", @$" form-data; name=""file""; filename=""{path}""");
-
-            // // var uploadHandler = new UploadHandlerRaw(screenshotData);
-            // //
-            // // uploadHandler.contentType = "image/png";
-            // //
-            // // request.uploadHandler = uploadHandler;
-
-            request.uploadHandler = new UploadHandlerRaw(screenshotData);
-
-            request.downloadHandler = new DownloadHandlerBuffer();
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
+            using (var www = UnityWebRequest.Post(string.Format(_attachmentUrl, issueResponseData.key), form))
             {
-#if JIRA_DEBUGGING
-                Debug.Log($"SCREENSHOT ATTACHED SUCCESSFULLY -> {request.downloadHandler.text}");
-#endif
-                complete?.Invoke();
+                www.SetRequestHeader("Authorization", _auth);
+//
+                www.SetRequestHeader("X-Atlassian-Token", "no-check");
 
-                yield break;
+                yield return www.SendWebRequest();
+
+                if (www.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogError("Error sending file: " + www.error);
+                }
+                else
+                {
+                    Debug.Log("File sent successfully!");
+
+                    complete?.Invoke();
+                }
             }
-#if JIRA_DEBUGGING
-            Debug.Log($"ERROR ATTACHING SCREENSHOT -> {request.error}");
-#endif
-            complete?.Invoke();
         }
     }
 }
