@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
 using UnityEngine;
-using Jira.Runtime.Utility;
-using File = Jira.Runtime.Utility.File;
+using UnityEditor;
 
 namespace Jira.Editor.Utility
 {
+    using Runtime.Utility;
+
     public static class RockVRUtility
     {
         private const string Target = "RockVR";
@@ -27,7 +28,11 @@ namespace Jira.Editor.Utility
 
                     var destination = Path.Combine(targetFolder, AssemblyRef);
 
-                    System.IO.File.Copy(source, Path.ChangeExtension(destination, File.Extension.asmref.Get()), true);
+                    var file = Path.ChangeExtension(destination, File.Extension.asmref.Get());
+
+                    System.IO.File.Copy(source, file, true);
+
+                    AssetDatabase.Refresh();
 
                     complete?.Invoke(true);
                 }

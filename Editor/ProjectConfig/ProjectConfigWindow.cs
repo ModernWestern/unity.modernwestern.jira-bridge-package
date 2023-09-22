@@ -99,9 +99,9 @@ namespace Jira.Editor.ProjectConfig
                 _defineJiraDebugging = !_defineJiraDebugging;
             }
 
-            // GUILayout.Space(10);
-            //
-            // RockVR();
+            GUILayout.Space(10);
+
+            RockVR();
 
             ScriptingDefineUtility.Set(Constants.Jira, EditorUserBuildSettings.selectedBuildTargetGroup, _definedJira);
 
@@ -137,20 +137,6 @@ namespace Jira.Editor.ProjectConfig
 
         private static void GetEditorPrefs()
         {
-            Prefs.jiraAuthDomain = _jiraAuth.domain;
-            Prefs.jiraSettingsFoldout = _jiraSettingsFoldout;
-            Prefs.jiraProjectKey = _jiraProject.key;
-            Prefs.jiraProjectSettingsFoldout = _jiraProjectSettingsFoldout;
-            Prefs.jiraAuthToken = _jiraAuth.token;
-            Prefs.jiraAuthUser = _jiraAuth.user;
-            Prefs.jiraProjectIssueType = _jiraProject.issueType;
-            Prefs.jiraDebugging = _defineJiraDebugging;
-            Prefs.defineJira = _definedJira;
-            Prefs.defineRockVR = _defineRockVR;
-        }
-
-        private static void SetEditorPrefs()
-        {
             _jiraAuth.domain = Prefs.jiraAuthDomain;
             _jiraSettingsFoldout = Prefs.jiraSettingsFoldout;
             _jiraProject.key = Prefs.jiraProjectKey;
@@ -163,27 +149,39 @@ namespace Jira.Editor.ProjectConfig
             _defineRockVR = Prefs.defineRockVR;
         }
 
+        private static void SetEditorPrefs()
+        {
+            Prefs.jiraAuthDomain = _jiraAuth.domain;
+            Prefs.jiraSettingsFoldout = _jiraSettingsFoldout;
+            Prefs.jiraProjectKey = _jiraProject.key;
+            Prefs.jiraProjectSettingsFoldout = _jiraProjectSettingsFoldout;
+            Prefs.jiraAuthToken = _jiraAuth.token;
+            Prefs.jiraAuthUser = _jiraAuth.user;
+            Prefs.jiraProjectIssueType = _jiraProject.issueType;
+            Prefs.jiraDebugging = _defineJiraDebugging;
+            Prefs.defineJira = _definedJira;
+            Prefs.defineRockVR = _defineRockVR;
+        }
+
         private static GUIStyle ButtonStyle(bool status, Color color)
         {
             var style = new GUIStyle(EditorStyles.toolbarButton)
             {
                 normal = { textColor = !status ? Color.white : color },
                 fixedHeight = 50,
-                fontSize = 20
+                fontSize = Mathf.Clamp(Screen.width / 20, 10, 25)
             };
-
-            style.fontSize = Mathf.Clamp(Screen.width / 16, 10, 25);
 
             return style;
         }
 
         #region HELPERS
 
-        private static bool Find(out GameObject go)
+        private static bool Find(out GameObject jiraBridgeObject)
         {
-            go = GameObject.Find("~JiraBridgeObject");
+            jiraBridgeObject = GameObject.Find("~JiraBridgeObject");
 
-            return go;
+            return jiraBridgeObject;
         }
 
         private static bool Validate(string value)

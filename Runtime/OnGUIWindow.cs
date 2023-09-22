@@ -180,18 +180,18 @@ namespace Jira.Runtime
 
             _sTextField = new GUIStyle(GUI.skin.textField)
             {
-                fontSize = Mathf.RoundToInt(_rBox.width * 0.015f),
+                fontSize = Mathf.RoundToInt(_rBox.width * 0.02f),
                 alignment = TextAnchor.MiddleLeft
             };
 
             _sTextArea = new GUIStyle(GUI.skin.textArea)
             {
-                fontSize = Mathf.RoundToInt(_rBox.width * 0.015f)
+                fontSize = Mathf.RoundToInt(_rBox.width * 0.02f)
             };
 
             _sButton = new GUIStyle(GUI.skin.button)
             {
-                fontSize = Mathf.RoundToInt(_rBox.width * 0.015f)
+                fontSize = Mathf.RoundToInt(_rBox.width * 0.02f)
             };
         }
     }
