@@ -10,7 +10,7 @@ To use Jira Bridge, you need to configure the following settings:
 
 1. **Jira Organization Domain**: Enter your Jira organization's domain.
 2. **Jira User**: Provide your Jira username.
-3. **Jira API Token**: Generate an API token in your Jira account settings and enter it here.
+3. **Jira API Token**: Generate an [API token](https://id.atlassian.com/manage-profile/security/api-tokens) in your Jira account settings and enter it here.
 4. **Issue Type ID**: Specify the ID for the issue type you want to create (e.g., Bug, Task).
 5. **Issue Key**: Enter the key for the Jira project where you want to create issues.
 
