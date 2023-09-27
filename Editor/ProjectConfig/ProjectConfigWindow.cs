@@ -1,3 +1,4 @@
+using Utility;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,6 +31,8 @@ namespace Jira.Editor.ProjectConfig
             {
                 if (!Find(out _))
                 {
+                    GitIgnore.ExcludeLogs();
+
                     new GameObject { name = "~JiraBridgeObject" }.AddComponent<OnGUIWindow>();
 
                     JiraClientSettings.Set(_jiraAuth.domain, _jiraAuth.user, _jiraAuth.token.Replace(" ", string.Empty), _jiraProject.issueType, _jiraProject.key);

@@ -2,7 +2,7 @@
 
 namespace Utility
 {
-    public static class FFileStream
+    public static class FileStreamExtension
     {
         public static void ReadAndClose(this FileStream @this, byte[] array, int offset, int count)
         {

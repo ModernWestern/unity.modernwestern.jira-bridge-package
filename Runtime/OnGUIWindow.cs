@@ -1,3 +1,4 @@
+using Utility;
 using System.IO;
 using UnityEngine;
 
@@ -5,26 +6,19 @@ namespace Jira.Runtime
 {
     using Utility;
 
-    public class OnGUIWindow : MonoBehaviour
+    public class OnGUIWindow : MonoSingleton<OnGUIWindow>
     {
         private static Rect _rBox, _rTextSummary, _rLabelSummary, _rTextDescription, _rLabelDescription, _rIssueButton, _rEnableButton, _rOpenIssueReporterButton;
-
         private static readonly Vector2 ButtonSize = new(150, 50);
-
         private static GUIStyle _sTextField, _sTextArea, _sButton;
-
         private static string _inputSummary, _inputDescription;
-
         private static DirectoryInfo _documents, _attachments;
-
         private static bool _start, _window, _upload;
 
         #region MODULES
 
         private IssueUploader _issueUploader;
-
         private ScreenDocument _screenDocument;
-
         private ScreenCapturer _screenCapturer;
 
 #if ROCK_VR
