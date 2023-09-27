@@ -9,7 +9,7 @@ namespace Jira.Runtime
     {
         private static Rect _rBox, _rTextSummary, _rLabelSummary, _rTextDescription, _rLabelDescription, _rIssueButton, _rEnableButton, _rOpenIssueReporterButton;
 
-        private static readonly Vector2 ButtonSize = new(100, 50);
+        private static readonly Vector2 ButtonSize = new(150, 50);
 
         private static GUIStyle _sTextField, _sTextArea, _sButton;
 
@@ -17,18 +17,19 @@ namespace Jira.Runtime
 
         private static DirectoryInfo _documents, _attachments;
 
-        private static bool _moduleActive, _windowOpen;
+        private static bool _start, _window, _upload;
 
         #region MODULES
 
+        private IssueUploader _issueUploader;
+
         private ScreenDocument _screenDocument;
+
+        private ScreenCapturer _screenCapturer;
 
 #if ROCK_VR
         private ScreenRecorder _screenRecorder;
 #endif
-        private ScreenCapturer _screenCapturer;
-
-        private IssueUploader _issueUploader;
 
         #endregion
 
@@ -60,15 +61,15 @@ namespace Jira.Runtime
         {
             Style();
 
-            if (!_moduleActive && GUI.Button(_rEnableButton, "Start Jira Bridge"))
+            if (!_start && GUI.Button(_rEnableButton, "Start Jira Bridge"))
             {
-                _moduleActive = !_moduleActive;
+                _start = !_start;
 #if ROCK_VR
                 _screenRecorder.StartRecording();
 #endif
             }
 
-            if (!_moduleActive)
+            if (!_start)
             {
                 return;
             }
@@ -80,7 +81,7 @@ namespace Jira.Runtime
                     _attachments.Create();
                 }
 
-                if (!_windowOpen)
+                if (!_window)
                 {
                     _screenCapturer.Save();
 #if ROCK_VR
@@ -91,10 +92,10 @@ namespace Jira.Runtime
 #endif
                 }
 
-                Delay.NextFrame(() => _windowOpen = !_windowOpen, this);
+                Delay.NextFrame(() => _window = !_window, this);
             }
 
-            if (!_windowOpen)
+            if (!_window)
             {
                 _inputSummary = string.Empty;
 
@@ -113,7 +114,7 @@ namespace Jira.Runtime
 
             _inputDescription = GUI.TextArea(_rTextDescription, _inputDescription, _sTextArea);
 
-            if (GUI.Button(_rIssueButton, "Upload Issue", _sButton))
+            if (!_upload && GUI.Button(_rIssueButton, "Upload Issue", _sButton))
             {
                 if (!_issueUploader.HasData || (string.IsNullOrEmpty(_inputSummary) && string.IsNullOrEmpty(_inputDescription)))
                 {
@@ -121,17 +122,27 @@ namespace Jira.Runtime
                 }
 
                 var json = JiraIssueConverter.GetJson(_issueUploader.ClientData.projectkey, _inputSummary, _inputDescription, _issueUploader.ClientData.issueid);
-
-                _issueUploader.Post(json, _screenCapturer.LastFile, () => _windowOpen = false, this);
-
-                // _issueUploader.Post(json, () => _issueUpload = true, this); // Without Attachment
-
+#if ROCK_VR
+                _issueUploader.Post(this, json, () =>
+                {
+                    _window = false;
+                    _upload = false;
+                }, _screenRecorder.FilePath, _screenCapturer.FilePath); // Screenshot & Video
+#else
+                _issueUploader.Post(json, _screenCapturer.FilePath, () =>
+                {
+                    _window = false;
+                    _upload = false;
+                }, this); // Screenshot Only
+#endif
                 if (!_attachments.Exists)
                 {
                     _attachments.Create();
                 }
 
                 _screenDocument.Save(_inputSummary, _inputDescription, _issueUploader.ClientData.projectkey, _issueUploader.ClientData.issueid);
+
+                _upload = true;
             }
         }
 

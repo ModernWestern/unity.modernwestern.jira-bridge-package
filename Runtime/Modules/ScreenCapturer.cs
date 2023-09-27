@@ -10,9 +10,9 @@ namespace Jira.Runtime
 
     public class ScreenCapturer
     {
-        public string LastFileName { get; private set; }
+        public string FileName { get; private set; }
 
-        public string LastFile { get; private set; }
+        public string FilePath { get; private set; }
 
         public int AttachmentsAmount => Exists(_path) ? GetFiles(_path).Count(file => !file.EndsWith(Extension.meta.Get()) && !file.EndsWith(Extension.mp4.Get())) : 0;
 
@@ -25,11 +25,11 @@ namespace Jira.Runtime
 
         public void Save()
         {
-            LastFileName = $"{Application.productName}_{System.DateTime.Now:yyyy_MM_dd}_{AttachmentsAmount}{Extension.png.Get()}";
+            FileName = $"{Application.productName}_{System.DateTime.Now:yyyy_MM_dd}_{AttachmentsAmount}{Extension.png.Get()}";
 
-            LastFile = Path.Combine(_path, LastFileName);
+            FilePath = Path.Combine(_path, FileName);
 
-            ScreenCapture.CaptureScreenshot(LastFile);
+            ScreenCapture.CaptureScreenshot(FilePath);
         }
 
         #region HELPERS

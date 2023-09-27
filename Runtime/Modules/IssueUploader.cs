@@ -1,8 +1,10 @@
 using System;
+using Utility;
+using System.IO;
+using System.Linq;
 using System.Text;
 using UnityEngine;
 using System.Collections;
-using System.IO;
 using UnityEngine.Networking;
 
 namespace Jira.Runtime
@@ -10,6 +12,8 @@ namespace Jira.Runtime
     public class IssueUploader
     {
         private readonly string _issueUrl, _attachmentUrl, _auth;
+
+        private int _attachmentsCount;
 
         public JiraClient ClientData { get; }
 
@@ -38,7 +42,9 @@ namespace Jira.Runtime
                 _attachmentUrl = $"{_issueUrl}/{{0}}/attachments";
 
                 _auth = $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientData.user}:{ClientData.token}"))}";
+                
 #if JIRA_DEBUGGING
+
                 Debug.Log($"AUTH -> {_auth}");
 #endif
             }
@@ -54,14 +60,24 @@ namespace Jira.Runtime
             mono.StartCoroutine(Issue(json, complete));
         }
 
-        public void Post(string json, string imagePath, MonoBehaviour mono)
+        public void Post(string json, string attachment, MonoBehaviour mono)
         {
-            mono.StartCoroutine(Issue(json, handler => mono.StartCoroutine(Attachment(handler.text, imagePath, null))));
+            mono.StartCoroutine(Issue(json, handler => mono.StartCoroutine(Attachment(handler.text, attachment, null))));
         }
 
-        public void Post(string json, string imagePath, Action complete, MonoBehaviour mono)
+        public void Post(string json, string attachment, Action complete, MonoBehaviour mono)
         {
-            mono.StartCoroutine(Issue(json, handler => mono.StartCoroutine(Attachment(handler.text, imagePath, complete))));
+            mono.StartCoroutine(Issue(json, handler => mono.StartCoroutine(Attachment(handler.text, attachment, complete))));
+        }
+
+        public void Post(MonoBehaviour mono, string json, params string[] attachments)
+        {
+            mono.StartCoroutine(Issue(json, handler => mono.StartCoroutine(Attachments(null, handler.text, attachments))));
+        }
+
+        public void Post(MonoBehaviour mono, string json, Action complete, params string[] attachments)
+        {
+            mono.StartCoroutine(Issue(json, handler => mono.StartCoroutine(Attachments(complete, handler.text, attachments))));
         }
 
         private IEnumerator Issue(string json, Action complete)
@@ -88,6 +104,7 @@ namespace Jira.Runtime
             if (request.result == UnityWebRequest.Result.Success)
             {
 #if JIRA_DEBUGGING
+
                 Debug.Log($"POST SUCCESSFUL -> {request.downloadHandler.text}");
 #endif
                 complete?.Invoke(request.downloadHandler);
@@ -95,99 +112,80 @@ namespace Jira.Runtime
                 yield break;
             }
 #if JIRA_DEBUGGING
+
             Debug.Log($"POST FAILED -> {request.error}");
 #endif
             complete?.Invoke(request.downloadHandler);
         }
 
-//         private IEnumerator Attachment(string issueResponse, string path, Action complete)
-//         {
-//             if (!File.Exists(path))
-//             {
-//                 complete?.Invoke();
-//
-//                 yield break;
-//             }
-//
-//             // var screenshotData = System.IO.File.ReadAllBytes(path);
-//
-//             var screenshotData = new FileStream(path, FileMode.Open, FileAccess.Read);
-//
-//             var issueResponseData = JiraIssueConverter.GetData(issueResponse);
-//
-// #if JIRA_DEBUGGING
-//             Debug.Log($"SCREENSHOT PATH -> {path}\nBytes Length [{screenshotData.Length}]");
-//
-//             Debug.Log(issueResponseData);
-// #endif
-//             var request = new UnityWebRequest(string.Format(_attachmentUrl, issueResponseData.key));
-//
-//             request.method = UnityWebRequest.kHttpVerbPOST;
-//
-//             request.SetRequestHeader("Authorization", _auth);
-//
-//             request.SetRequestHeader("X-Atlassian-Token", "no-check");
-//
-//             request.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(screenshotData.ToString()));
-//
-//             request.downloadHandler = new DownloadHandlerBuffer();
-//
-//             yield return request.SendWebRequest();
-//
-//             if (request.result == UnityWebRequest.Result.Success)
-//             {
-// #if JIRA_DEBUGGING
-//                 Debug.Log($"SCREENSHOT ATTACHED SUCCESSFULLY -> {request.downloadHandler.text}");
-// #endif
-//                 complete?.Invoke();
-//
-//                 yield break;
-//             }
-// #if JIRA_DEBUGGING
-//             Debug.Log($"ERROR ATTACHING SCREENSHOT -> {request.error}");
-// #endif
-//             complete?.Invoke();
-//         }
-//     }
+        private IEnumerator Attachments(Action complete, string issueResponse, params string[] paths)
+        {
+            return paths.Select(path => Attachment(issueResponse, path, () =>
+            {
+                _attachmentsCount++;
+
+                if (_attachmentsCount != paths.Length)
+                {
+                    return;
+                }
+
+                _attachmentsCount = 0;
+
+                complete?.Invoke();
+                
+            })).GetEnumerator();
+        }
 
         private IEnumerator Attachment(string issueResponse, string path, Action complete)
         {
             if (!File.Exists(path))
             {
+#if JIRA_DEBUGGING
+
+                Debug.Log($"FILE [{(string.IsNullOrEmpty(path) ? "null" : path)}] DOES NOT EXIST");
+#endif
                 complete?.Invoke();
 
                 yield break;
             }
 
-            WWWForm form = new WWWForm();
-            FileStream fileStream = new FileStream(path, FileMode.Open);
-            byte[] fileBytes = new byte[fileStream.Length];
-            var read = fileStream.Read(fileBytes, 0, fileBytes.Length);
-            fileStream.Close();
+            var form = new WWWForm();
+
+            var fileStream = new FileStream(path, FileMode.Open);
+
+            var fileBytes = new byte[fileStream.Length];
+
+            fileStream.ReadAndClose(fileBytes, 0, fileBytes.Length);
 
             form.AddBinaryData("file", fileBytes, Path.GetFileName(path));
 
             var issueResponseData = JiraIssueConverter.GetData(issueResponse);
 
-            using (var www = UnityWebRequest.Post(string.Format(_attachmentUrl, issueResponseData.key), form))
+            using var request = UnityWebRequest.Post(string.Format(_attachmentUrl, issueResponseData.key), form);
+
+            request.SetRequestHeader("Authorization", _auth);
+
+            request.SetRequestHeader("X-Atlassian-Token", "no-check");
+
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
             {
-                www.SetRequestHeader("Authorization", _auth);
-//
-                www.SetRequestHeader("X-Atlassian-Token", "no-check");
+                request.Dispose();
 
-                yield return www.SendWebRequest();
+#if JIRA_DEBUGGING
 
-                if (www.result != UnityWebRequest.Result.Success)
-                {
-                    Debug.LogError("Error sending file: " + www.error);
-                }
-                else
-                {
-                    Debug.Log("File sent successfully!");
+                Debug.Log($"FILE [{path}] ATTACHED SUCCESSFULLY -> {request.downloadHandler.text}");
+#endif
+                complete?.Invoke();
 
-                    complete?.Invoke();
-                }
+                yield break;
             }
+#if JIRA_DEBUGGING
+
+            Debug.Log($"ERROR ATTACHING [{path}] FILE -> {request.error}");
+#endif
+            complete?.Invoke();
         }
     }
 }

@@ -1,12 +1,22 @@
-using UnityEngine;
-
 #if ROCK_VR
+
+using System;
+using UnityEngine;
 using RockVR.Video;
 
 namespace Jira.Runtime
 {
     public class ScreenRecorder
     {
+        /// <summary>
+        /// Returns the path of the file after Muxing.
+        /// </summary>
+        public event Action<string> OnMuxingComplete;
+
+        public string FilePath => PathConfig.lastVideoFile;
+
+        private readonly VideoCapture _videoCapture;
+
         private readonly VideoCaptureCtrl _videoCaptureController;
 
         public void StartRecording() => _videoCaptureController.StartCapture();
@@ -15,11 +25,11 @@ namespace Jira.Runtime
 
         public bool IsRecording() => _videoCaptureController.status == VideoCaptureCtrlBase.StatusType.STARTED;
 
-        public ScreenRecorder(GameObject qaObject, string path)
+        public ScreenRecorder(GameObject jiraBridgeObject, string path)
         {
-            PathConfig.SaveFolder = path + "/";
+            PathConfig.SaveFolder = $"{path}/";
 
-            _videoCaptureController = qaObject.AddComponent<VideoCaptureCtrl>();
+            _videoCaptureController = jiraBridgeObject.AddComponent<VideoCaptureCtrl>();
 
 #if JIRA_DEBUGGING
             _videoCaptureController.debug = true;
@@ -30,31 +40,38 @@ namespace Jira.Runtime
 
             _videoCaptureController.captureTime = 10;
 
-            var videoCapture = qaObject.AddComponent<VideoCapture>();
+            _videoCapture = jiraBridgeObject.AddComponent<VideoCapture>();
 
-            var recordingCamera = videoCapture.GetComponent<Camera>();
+            var recordingCamera = _videoCapture.GetComponent<Camera>();
 
             recordingCamera.CopyFrom(Camera.main);
 
             recordingCamera.targetDisplay = 1;
 
-            videoCapture.customPathFolder = path;
+            _videoCapture.customPathFolder = path;
 
-            videoCapture.customPath = true;
+            _videoCapture.customPath = true;
 
-            videoCapture.isDedicated = true;
+            _videoCapture.isDedicated = true;
 
-            videoCapture.frameSize = VideoCaptureBase.FrameSizeType._1920x1080;
+            _videoCapture.mode = VideoCaptureBase.ModeType.LOCAL;
 
-            videoCapture.encodeQuality = VideoCaptureBase.EncodeQualityType.Medium;
+            _videoCapture.frameSize = VideoCaptureBase.FrameSizeType._1920x1080;
 
-            videoCapture._targetFramerate = VideoCaptureBase.TargetFramerateType._30;
+            _videoCapture.encodeQuality = VideoCaptureBase.EncodeQualityType.Medium;
 
-            videoCapture._antiAliasing = VideoCaptureBase.AntiAliasingType._2;
+            _videoCapture._targetFramerate = VideoCaptureBase.TargetFramerateType._30;
 
-            _videoCaptureController.videoCaptures = new VideoCaptureBase[] { videoCapture };
+            _videoCapture._antiAliasing = VideoCaptureBase.AntiAliasingType._2;
 
-            _videoCaptureController.audioCapture = Camera.main.gameObject.AddComponent<AudioCapture>();
+            _videoCaptureController.videoCaptures = new VideoCaptureBase[] { _videoCapture };
+
+            _videoCaptureController.eventDelegate.OnComplete += () => OnMuxingComplete?.Invoke(PathConfig.lastVideoFile);
+
+            if (Camera.main != null)
+            {
+                _videoCaptureController.audioCapture = Camera.main.gameObject.AddComponent<AudioCapture>();
+            }
         }
     }
 }

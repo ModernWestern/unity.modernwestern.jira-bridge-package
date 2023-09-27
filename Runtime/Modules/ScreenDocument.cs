@@ -31,7 +31,7 @@ namespace Jira.Runtime
 
                 if (!markdown.Exists)
                 {
-                    var table = MarkdownTableGenerator.Create(summary, description, project, description, date, _screenCapturer.LastFileName);
+                    var table = MarkdownTableGenerator.Create(summary, description, project, description, date, _screenCapturer.FileName);
 
                     using var markdownFile = markdown.CreateText();
 
@@ -39,7 +39,7 @@ namespace Jira.Runtime
                 }
                 else
                 {
-                    var row = MarkdownTableGenerator.AddRow(summary, description, project, issue, date, _screenCapturer.LastFileName);
+                    var row = MarkdownTableGenerator.AddRow(summary, description, project, issue, date, _screenCapturer.FileName);
 
                     using var markdownFile = markdown.AppendText();
 
