@@ -42,9 +42,8 @@ namespace Jira.Runtime
                 _attachmentUrl = $"{_issueUrl}/{{0}}/attachments";
 
                 _auth = $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientData.user}:{ClientData.token}"))}";
-                
-#if JIRA_DEBUGGING
 
+#if JIRA_DEBUGGING
                 Debug.Log($"AUTH -> {_auth}");
 #endif
             }
@@ -104,18 +103,20 @@ namespace Jira.Runtime
             if (request.result == UnityWebRequest.Result.Success)
             {
 #if JIRA_DEBUGGING
-
                 Debug.Log($"POST SUCCESSFUL -> {request.downloadHandler.text}");
 #endif
                 complete?.Invoke(request.downloadHandler);
 
+                request.Dispose();
+
                 yield break;
             }
 #if JIRA_DEBUGGING
-
             Debug.Log($"POST FAILED -> {request.error}");
 #endif
             complete?.Invoke(request.downloadHandler);
+
+            request.Dispose();
         }
 
         private IEnumerator Attachments(Action complete, string issueResponse, params string[] paths)
@@ -141,7 +142,6 @@ namespace Jira.Runtime
             if (!File.Exists(path))
             {
 #if JIRA_DEBUGGING
-
                 Debug.Log($"FILE [{(string.IsNullOrEmpty(path) ? "null" : path)}] DOES NOT EXIST");
 #endif
                 complete?.Invoke();
@@ -163,6 +163,8 @@ namespace Jira.Runtime
 
             using var request = UnityWebRequest.Post(string.Format(_attachmentUrl, issueResponseData.key), form);
 
+            request.downloadHandler = new DownloadHandlerBuffer();
+
             request.SetRequestHeader("Authorization", _auth);
 
             request.SetRequestHeader("X-Atlassian-Token", "no-check");
@@ -171,21 +173,21 @@ namespace Jira.Runtime
 
             if (request.result == UnityWebRequest.Result.Success)
             {
-                request.Dispose();
-
 #if JIRA_DEBUGGING
-
                 Debug.Log($"FILE [{path}] ATTACHED SUCCESSFULLY -> {request.downloadHandler.text}");
 #endif
                 complete?.Invoke();
 
+                request.Dispose();
+
                 yield break;
             }
 #if JIRA_DEBUGGING
-
             Debug.Log($"ERROR ATTACHING [{path}] FILE -> {request.error}");
 #endif
             complete?.Invoke();
+
+            request.Dispose();
         }
     }
 }

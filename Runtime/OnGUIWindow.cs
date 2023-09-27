@@ -1,4 +1,3 @@
-using Utility;
 using System.IO;
 using UnityEngine;
 
@@ -6,19 +5,26 @@ namespace Jira.Runtime
 {
     using Utility;
 
-    public class OnGUIWindow : MonoSingleton<OnGUIWindow>
+    public class OnGUIWindow : MonoBehaviour
     {
         private static Rect _rBox, _rTextSummary, _rLabelSummary, _rTextDescription, _rLabelDescription, _rIssueButton, _rEnableButton, _rOpenIssueReporterButton;
+
         private static readonly Vector2 ButtonSize = new(150, 50);
+
+        private static DirectoryInfo _documents, _attachments, _tmp;
+
         private static GUIStyle _sTextField, _sTextArea, _sButton;
+
         private static string _inputSummary, _inputDescription;
-        private static DirectoryInfo _documents, _attachments;
+
         private static bool _start, _window, _upload;
 
         #region MODULES
 
         private IssueUploader _issueUploader;
+
         private ScreenDocument _screenDocument;
+
         private ScreenCapturer _screenCapturer;
 
 #if ROCK_VR
@@ -41,8 +47,11 @@ namespace Jira.Runtime
             _documents = new DirectoryInfo(Path.Combine(Application.streamingAssetsPath, "Jira Issues Log", Application.productName));
 #endif
             _attachments = new DirectoryInfo(Path.Combine(_documents.FullName, "Attachments"));
+
 #if ROCK_VR
-            _screenRecorder = new ScreenRecorder(gameObject, _attachments.FullName);
+            _tmp = new DirectoryInfo(Path.Combine(_documents.FullName, "Temp"));
+
+            _screenRecorder = new ScreenRecorder(gameObject, _tmp.FullName);
 #endif
             _screenCapturer = new ScreenCapturer(_attachments.FullName);
 
@@ -120,13 +129,23 @@ namespace Jira.Runtime
                 _issueUploader.Post(this, json, () =>
                 {
                     _window = false;
+
                     _upload = false;
+
+                    if (System.IO.File.Exists(_screenRecorder.FilePath))
+                    {
+                        System.IO.File.Delete(_screenRecorder.FilePath);
+                    }
+
+                    _screenRecorder.StartRecording();
                 }, _screenRecorder.FilePath, _screenCapturer.FilePath); // Screenshot & Video
 #else
                 _issueUploader.Post(json, _screenCapturer.FilePath, () =>
                 {
                     _window = false;
+
                     _upload = false;
+
                 }, this); // Screenshot Only
 #endif
                 if (!_attachments.Exists)
@@ -137,6 +156,23 @@ namespace Jira.Runtime
                 _screenDocument.Save(_inputSummary, _inputDescription, _issueUploader.ClientData.projectkey, _issueUploader.ClientData.issueid);
 
                 _upload = true;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_screenRecorder.IsRecording())
+            {
+                const string projectCrash = "[project crash]";
+
+                _screenCapturer.Save("CRASH");
+
+                _screenDocument.Save(projectCrash, projectCrash, projectCrash, projectCrash);
+
+                foreach (var file in _tmp.GetFiles())
+                {
+                    file.Delete();
+                }
             }
         }
 

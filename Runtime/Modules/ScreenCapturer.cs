@@ -23,9 +23,9 @@ namespace Jira.Runtime
             _path = path;
         }
 
-        public void Save()
+        public void Save(string name = null)
         {
-            FileName = $"{Application.productName}_{System.DateTime.Now:yyyy_MM_dd}_{AttachmentsAmount}{Extension.png.Get()}";
+            FileName = $"{(string.IsNullOrEmpty(name) ? "" : $"[{name}] ")}{Application.productName}_{System.DateTime.Now:yyyy_MM_dd}_{AttachmentsAmount}{Extension.png.Get()}";
 
             FilePath = Path.Combine(_path, FileName);
 

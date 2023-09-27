@@ -18,7 +18,7 @@ namespace Jira.Runtime
         {
             _screenCapturer = screenCapturer;
 
-            _markdownPath = Path.Combine(path, $"{Application.productName} - issuesLog{Extension.md.Get()}");
+            _markdownPath = Path.Combine(path, $"{Application.productName} - Issues Log{Extension.md.Get()}");
         }
 
         public void Save(string summary, string description, string project, string issue)
