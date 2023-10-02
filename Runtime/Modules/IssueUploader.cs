@@ -11,10 +11,10 @@ namespace Jira.Runtime
 {
     public class IssueUploader
     {
-        private readonly string _issueUrl, _attachmentUrl, _auth;
-
         private int _attachmentsCount;
-
+        
+        private readonly string _issueUrl, _attachmentUrl, _auth;
+        
         public JiraClient ClientData { get; }
 
         public bool HasData { get; }
@@ -24,29 +24,34 @@ namespace Jira.Runtime
         /// User = The email associated with the reporter's Jira account.
         public IssueUploader()
         {
-            if (JiraClientSettings.Get() is { } data)
+            if (JiraClientSettings.Get() is not { } data)
             {
-                HasData = true;
+#if JIRA_DEBUGGING
+                Debug.Log("JIRA -> JSON Settings not found");
+#endif
+                return;
+            }
 
-                ClientData = new JiraClient
-                {
-                    domain = data.domain,
-                    user = data.user,
-                    token = data.token,
-                    projectkey = data.projectkey,
-                    issueid = data.issueid
-                };
+            HasData = true;
 
-                _issueUrl = $"{ClientData.domain}/rest/api/2/issue";
+            ClientData = new JiraClient
+            {
+                domain = data.domain,
+                user = data.user,
+                token = data.token,
+                projectkey = data.projectkey,
+                issueid = data.issueid
+            };
 
-                _attachmentUrl = $"{_issueUrl}/{{0}}/attachments";
+            _issueUrl = $"{ClientData.domain}/rest/api/2/issue";
 
-                _auth = $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientData.user}:{ClientData.token}"))}";
+            _attachmentUrl = $"{_issueUrl}/{{0}}/attachments";
+
+            _auth = $"Basic {Convert.ToBase64String(Encoding.UTF8.GetBytes($"{ClientData.user}:{ClientData.token}"))}";
 
 #if JIRA_DEBUGGING
-                Debug.Log($"AUTH -> {_auth}");
+            Debug.Log($"AUTH -> {_auth}");
 #endif
-            }
         }
 
         public void Post(string json, MonoBehaviour mono)
@@ -133,7 +138,6 @@ namespace Jira.Runtime
                 _attachmentsCount = 0;
 
                 complete?.Invoke();
-                
             })).GetEnumerator();
         }
 

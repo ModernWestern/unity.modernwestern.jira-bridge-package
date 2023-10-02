@@ -10,18 +10,21 @@ namespace Jira.Runtime
 
     public class ScreenDocument
     {
-        private readonly ScreenCapturer _screenCapturer;
-
         private readonly string _markdownPath;
 
-        public ScreenDocument(string path, ScreenCapturer screenCapturer)
+        public ScreenDocument(string path)
         {
-            _screenCapturer = screenCapturer;
-
             _markdownPath = Path.Combine(path, $"{Application.productName} - Issues Log{Extension.md.Get()}");
         }
 
-        public void Save(string summary, string description, string project, string issue)
+        public void SaveOnCrash(string file)
+        {
+            const string crash = "[project crash]";
+
+            Save(crash, crash, crash, crash, file);
+        }
+
+        public void Save(string summary, string description, string project, string issue, string file)
         {
             try
             {
@@ -31,7 +34,7 @@ namespace Jira.Runtime
 
                 if (!markdown.Exists)
                 {
-                    var table = MarkdownTableGenerator.Create(summary, description, project, description, date, _screenCapturer.FileName);
+                    var table = MarkdownTableGenerator.Create(summary, description, project, description, date, file);
 
                     using var markdownFile = markdown.CreateText();
 
@@ -39,7 +42,7 @@ namespace Jira.Runtime
                 }
                 else
                 {
-                    var row = MarkdownTableGenerator.AddRow(summary, description, project, issue, date, _screenCapturer.FileName);
+                    var row = MarkdownTableGenerator.AddRow(summary, description, project, issue, date, file);
 
                     using var markdownFile = markdown.AppendText();
 

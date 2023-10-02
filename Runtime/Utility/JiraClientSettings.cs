@@ -1,13 +1,16 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using UnityEngine;
 
 namespace Jira.Runtime
 {
     public static class JiraClientSettings
     {
+        private static readonly string FilePath;
+        
         private static readonly DirectoryInfo StreamingAssetsDirectory;
 
-        private static readonly string FilePath;
+        public static bool Exists => File.Exists(FilePath);
 
         static JiraClientSettings()
         {
@@ -53,12 +56,37 @@ namespace Jira.Runtime
 #if JIRA_DEBUGGING
             Debug.Log($"FILE SET -> {client}");
 #endif
-            if (!File.Exists(FilePath))
+            try
             {
-                File.Create(FilePath);
-            }
+                using (var fileStream = File.Create(FilePath))
+                {
+                    var data = System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(client));
 
-            File.WriteAllText(FilePath, JsonUtility.ToJson(client));
+                    fileStream.Write(data, 0, data.Length);
+
+                    fileStream.Close();
+                }
+
+#if JIRA_DEBUGGING
+                Debug.Log("JIRA -> Settings successfully written to the file.");
+#endif
+            }
+            catch (IOException e)
+            {
+#if JIRA_DEBUGGING
+                Debug.LogError("JIRA -> IOException: " + e.Message);
+#else
+                _ = e;
+#endif
+            }
+            catch (Exception e)
+            {
+#if JIRA_DEBUGGING
+                Debug.LogError("JIRA -> An error occurred: " + e.Message);
+#else
+                _ = e;
+#endif
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using Utility;
 using System.IO;
 using UnityEngine;
 
@@ -21,15 +22,14 @@ namespace Jira.Runtime
 
         #region MODULES
 
-        private IssueUploader _issueUploader;
-
+#if ROCK_VR
+        private ScreenRecorder _screenRecorder;
+#endif
         private ScreenDocument _screenDocument;
 
         private ScreenCapturer _screenCapturer;
 
-#if ROCK_VR
-        private ScreenRecorder _screenRecorder;
-#endif
+        private IssueUploader _issueUploader;
 
         #endregion
 
@@ -55,7 +55,7 @@ namespace Jira.Runtime
 #endif
             _screenCapturer = new ScreenCapturer(_attachments.FullName);
 
-            _screenDocument = new ScreenDocument(_documents.FullName, _screenCapturer);
+            _screenDocument = new ScreenDocument(_documents.FullName);
 
             _issueUploader = new IssueUploader();
         }
@@ -138,6 +138,7 @@ namespace Jira.Runtime
                     }
 
                     _screenRecorder.StartRecording();
+                    
                 }, _screenRecorder.FilePath, _screenCapturer.FilePath); // Screenshot & Video
 #else
                 _issueUploader.Post(json, _screenCapturer.FilePath, () =>
@@ -153,7 +154,7 @@ namespace Jira.Runtime
                     _attachments.Create();
                 }
 
-                _screenDocument.Save(_inputSummary, _inputDescription, _issueUploader.ClientData.projectkey, _issueUploader.ClientData.issueid);
+                _screenDocument.Save(_inputSummary, _inputDescription, _issueUploader.ClientData.projectkey, _issueUploader.ClientData.issueid, _screenCapturer.FileName);
 
                 _upload = true;
             }
@@ -161,19 +162,21 @@ namespace Jira.Runtime
 
         private void OnDestroy()
         {
+#if ROCK_VR
+            _screenRecorder.Clean();
+
             if (_screenRecorder.IsRecording())
             {
-                const string projectCrash = "[project crash]";
-
                 _screenCapturer.Save("CRASH");
 
-                _screenDocument.Save(projectCrash, projectCrash, projectCrash, projectCrash);
+                _screenDocument.SaveOnCrash(_screenCapturer.FileName);
 
                 foreach (var file in _tmp.GetFiles())
                 {
-                    file.Delete();
+                    file.ForceDelete();
                 }
             }
+#endif
         }
 
         private static void Style()

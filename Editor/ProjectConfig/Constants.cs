@@ -23,5 +23,7 @@
         public const string JiraProjectIssueType = "jira_issue_type";
 
         public const string Https = "https://";
+
+        public const string JiraObject = "~JiraBridgeObject";
     }
 }

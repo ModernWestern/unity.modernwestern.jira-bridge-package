@@ -73,6 +73,11 @@ namespace Jira.Runtime
                 _videoCaptureController.audioCapture = Camera.main.gameObject.AddComponent<AudioCapture>();
             }
         }
+
+        public void Clean()
+        {
+            _videoCapture.Cleanup();
+        }
     }
 }
 

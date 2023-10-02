@@ -10,7 +10,8 @@
             png,
             meta,
             asmref,
-            js
+            js,
+            cs
         }
 
         private const string    Text = ".txt",
@@ -19,6 +20,7 @@
                                 PNG = ".png",
                                 Meta = ".meta",
                                 Js = ".js",
+                                Cs = ".cs",
                                 AssemblyRef = ".asmref";
 
         public static string Get(this Extension extension)
@@ -31,6 +33,7 @@
                 Extension.txt => Text,
                 Extension.meta => Meta,
                 Extension.js => Js,
+                Extension.cs => Cs,
                 Extension.asmref => AssemblyRef,
                 _ => ""
             };

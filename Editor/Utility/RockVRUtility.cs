@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEditor;
 
@@ -9,28 +10,32 @@ namespace Jira.Editor.Utility
 
     public static class RockVRUtility
     {
-        private const string Target = "RockVR";
+        private const string RockVRFolder = "RockVR";
 
-        private const string Package = "jira-bridge";
-
-        private const string AssemblyRef = "AssemblyReference";
+        private const string PackageFolder = "jira-bridge";
 
         public static void CreateAssemblyReference(Action<bool> complete)
         {
-            if (DirectoryPathFinder.FindDirectoryPathInProjectByPattern(Package, out var packageFolder) && DirectoryPathFinder.FindDirectoryPathInProject(Target, out var targetFolder))
+            FileImporter(complete, "AssemblyReference", File.Extension.asmref, PackageFolder, RockVRFolder, "Samples~");
+        }
+
+        public static void ModifyRockUtilsFile(Action<bool> complete)
+        {
+            FileImporter(complete, "Utils", File.Extension.cs, PackageFolder, RockVRFolder, "Video", "Scripts", "Utils");
+        }
+
+        private static void FileImporter(Action<bool> complete, string fileName, File.Extension extension, string source, string target, params string[] subFolders)
+        {
+            if (DirectoryPathFinder.FindDirectoryPathInProjectByPattern(source, out var sourcePath) && DirectoryPathFinder.FindDirectoryPathInProject(target, out var targetPath))
             {
 #if UNITY_EDITOR
-                Debug.Log($"SOURCE -> {packageFolder}, DESTINATION -> {targetFolder}");
+                Debug.Log($"SOURCE -> {sourcePath}, DESTINATION -> {targetPath}");
 #endif
                 try
                 {
-                    var source = Path.Combine(packageFolder, "Samples~", AssemblyRef);
+                    ArrayUtility.Add(ref subFolders, fileName);
 
-                    var destination = Path.Combine(targetFolder, AssemblyRef);
-
-                    var file = Path.ChangeExtension(destination, File.Extension.asmref.Get());
-
-                    System.IO.File.Copy(source, file, true);
+                    System.IO.File.Copy(subFolders.Aggregate(sourcePath, Path.Combine), Path.ChangeExtension(Path.Combine(targetPath, fileName), extension.Get()), true);
 
                     AssetDatabase.Refresh();
 

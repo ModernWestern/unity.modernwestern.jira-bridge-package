@@ -28,14 +28,16 @@ namespace Jira.Editor.ProjectConfig
 
             if (_definedJira)
             {
-                if (!Find(out _))
+                if (Find(out _))
                 {
-                    // GitIgnore.ExcludeLogs();
-
-                    new GameObject { name = "~JiraBridgeObject" }.AddComponent<OnGUIWindow>();
-
-                    JiraClientSettings.Set(_jiraAuth.domain, _jiraAuth.user, _jiraAuth.token.Replace(" ", string.Empty), _jiraProject.issueType, _jiraProject.key);
+                    return;
                 }
+
+                // GitIgnore.ExcludeLogs();
+
+                new GameObject { name = Constants.JiraObject }.AddComponent<OnGUIWindow>();
+
+                JiraClientSettings.Set(_jiraAuth.domain, _jiraAuth.user, _jiraAuth.token.Clean(), _jiraProject.issueType, _jiraProject.key);
             }
             else
             {
@@ -56,11 +58,13 @@ namespace Jira.Editor.ProjectConfig
             {
                 Label("Domain", EditorStyles.largeLabel);
 
-                _jiraAuth.domain = TextField("", Validate(_jiraAuth.domain) ? _jiraAuth.domain.Contains(Constants.Https) ? _jiraAuth.domain : $"{Constants.Https}{_jiraAuth.domain}" : "");
+                var domain = Validate(_jiraAuth.domain) ? _jiraAuth.domain.Contains(Constants.Https) ? _jiraAuth.domain : $"{Constants.Https}{_jiraAuth.domain}" : string.Empty;
+
+                _jiraAuth.domain = TextField(string.Empty, domain);
 
                 Label("User", EditorStyles.largeLabel);
 
-                _jiraAuth.user = TextField("", _jiraAuth.user);
+                _jiraAuth.user = TextField(string.Empty, _jiraAuth.user);
 
                 Label("API Token", EditorStyles.largeLabel);
 
@@ -78,11 +82,18 @@ namespace Jira.Editor.ProjectConfig
             {
                 Label("Key", EditorStyles.largeLabel);
 
-                _jiraProject.key = TextField("", _jiraProject.key.ToUpper());
+                _jiraProject.key = TextField(string.Empty, _jiraProject.key.ToUpper());
 
                 Label("Issue Type", EditorStyles.largeLabel);
 
-                _jiraProject.issueType = TextField("", _jiraProject.issueType);
+                _jiraProject.issueType = TextField(string.Empty, _jiraProject.issueType);
+            }
+
+            GUILayout.Space(10);
+
+            if (GUILayout.Button(JiraClientSettings.Exists ? "Update JSON" : "Create JSON"))
+            {
+                JiraClientSettings.Set(_jiraAuth.domain, _jiraAuth.user, _jiraAuth.token.Clean(), _jiraProject.issueType, _jiraProject.key);
             }
 
             GUILayout.Space(10);
@@ -170,8 +181,8 @@ namespace Jira.Editor.ProjectConfig
             var style = new GUIStyle(EditorStyles.toolbarButton)
             {
                 normal = { textColor = !status ? Color.white : color },
-                fixedHeight = 50,
-                fontSize = Mathf.Clamp(Screen.width / 20, 10, 25)
+                fixedHeight = 40,
+                fontSize = Mathf.Clamp(Screen.width / 20, 9, 18)
             };
 
             return style;
@@ -181,7 +192,7 @@ namespace Jira.Editor.ProjectConfig
 
         private static bool Find(out GameObject jiraBridgeObject)
         {
-            jiraBridgeObject = GameObject.Find("~JiraBridgeObject");
+            jiraBridgeObject = GameObject.Find(Constants.JiraObject);
 
             return jiraBridgeObject;
         }
