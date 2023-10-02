@@ -133,6 +133,8 @@ namespace Jira.Editor.ProjectConfig
                     {
                         if (done)
                         {
+                            RockVRUtility.ModifyRockUtilsFile();
+                            
                             ScriptingDefineUtility.Add(Constants.RockVR, EditorUserBuildSettings.selectedBuildTargetGroup);
                         }
                         else
