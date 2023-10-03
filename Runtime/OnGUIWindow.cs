@@ -57,7 +57,7 @@ namespace Jira.Runtime
 
             _screenDocument = new ScreenDocument(_documents.FullName);
 
-            _issueUploader = new IssueUploader();
+            _issueUploader = new IssueUploader(); 
         }
 
         private void OnGUI()
