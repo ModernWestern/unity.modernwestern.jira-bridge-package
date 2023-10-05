@@ -31,6 +31,8 @@ namespace Jira.Runtime
 
         private IssueUploader _issueUploader;
 
+        private InputLogger _inputLogger;
+
         #endregion
 
         private void Awake()
@@ -53,11 +55,13 @@ namespace Jira.Runtime
 
             _screenRecorder = new ScreenRecorder(gameObject, _tmp.FullName);
 #endif
+            _inputLogger = new InputLogger(_documents.FullName, this);
+
             _screenCapturer = new ScreenCapturer(_attachments.FullName);
 
             _screenDocument = new ScreenDocument(_documents.FullName);
 
-            _issueUploader = new IssueUploader(); 
+            _issueUploader = new IssueUploader();
         }
 
         private void OnGUI()
@@ -67,6 +71,8 @@ namespace Jira.Runtime
             if (!_start && GUI.Button(_rEnableButton, "Start Jira Bridge"))
             {
                 _start = !_start;
+
+                _inputLogger.Start();
 #if ROCK_VR
                 _screenRecorder.StartRecording();
 #endif
@@ -86,6 +92,8 @@ namespace Jira.Runtime
 
                 if (!_window)
                 {
+                    _inputLogger.Stop();
+
                     _screenCapturer.Save();
 #if ROCK_VR
                     if (_screenRecorder.IsRecording())
@@ -137,17 +145,20 @@ namespace Jira.Runtime
                         System.IO.File.Delete(_screenRecorder.FilePath);
                     }
 
+                    _inputLogger.Start();
+
                     _screenRecorder.StartRecording();
-                    
-                }, _screenRecorder.FilePath, _screenCapturer.FilePath); // Screenshot & Video
+                }, _screenRecorder.FilePath, _screenCapturer.FilePath, _inputLogger.FilePath);
 #else
-                _issueUploader.Post(json, _screenCapturer.FilePath, () =>
+                _issueUploader.Post(this, json, () =>
                 {
                     _window = false;
 
                     _upload = false;
 
-                }, this); // Screenshot Only
+                    _inputLogger.Start();
+                    
+                }, _screenCapturer.FilePath, _inputLogger.FilePath);
 #endif
                 if (!_attachments.Exists)
                 {

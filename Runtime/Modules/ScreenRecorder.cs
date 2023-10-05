@@ -19,10 +19,12 @@ namespace Jira.Runtime
 
         private readonly VideoCaptureCtrl _videoCaptureController;
 
-        public void StartRecording() => _videoCaptureController.StartCapture();
-
+        public void Clean() => _videoCapture.Cleanup();
+        
         public void StopRecording() => _videoCaptureController.StopCapture();
-
+        
+        public void StartRecording() => _videoCaptureController.StartCapture();
+        
         public bool IsRecording() => _videoCaptureController.status == VideoCaptureCtrlBase.StatusType.STARTED;
 
         public ScreenRecorder(GameObject jiraBridgeObject, string path)
@@ -72,11 +74,6 @@ namespace Jira.Runtime
             {
                 _videoCaptureController.audioCapture = Camera.main.gameObject.AddComponent<AudioCapture>();
             }
-        }
-
-        public void Clean()
-        {
-            _videoCapture.Cleanup();
         }
     }
 }
