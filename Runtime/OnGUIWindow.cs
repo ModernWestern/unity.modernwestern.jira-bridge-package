@@ -148,6 +148,7 @@ namespace Jira.Runtime
                     _inputLogger.Start();
 
                     _screenRecorder.StartRecording();
+                    
                 }, _screenRecorder.FilePath, _screenCapturer.FilePath, _inputLogger.FilePath);
 #else
                 _issueUploader.Post(this, json, () =>
