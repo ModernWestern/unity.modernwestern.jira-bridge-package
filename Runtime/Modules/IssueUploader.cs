@@ -138,6 +138,7 @@ namespace Jira.Runtime
                 _attachmentsCount = 0;
 
                 complete?.Invoke();
+                
             })).GetEnumerator();
         }
 
